@@ -65,8 +65,10 @@ public class Client {
 						System.out.println("Signing... Out");
 					   	break;
 					}
-					
-					String[] cmd = raw.split(" ", 3);
+
+					String[] cmd = raw.split(" ");
+					String[] cmd3 = raw.split(" ", 3);
+					String[] cmd4 = raw.split(" ", 3);
 					
 					switch(cmd[0]){
 					case "set":
