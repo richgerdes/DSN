@@ -1,0 +1,20 @@
+law(trivial, language(javascript))
+
+UPON("sent", function() {
+  DO("forward", {
+    sender: "",
+    receiver: this.sender,
+    message: this.message
+  });
+  return true;
+});
+
+UPON("arrived", function() {
+  DO("deliver");
+  return true;
+});
+
+UPON("disconnected", function() {
+  DO("quit");
+  return true;
+});

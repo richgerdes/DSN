@@ -1,5 +1,5 @@
 =431 Project=
-==Distributed Socail Network==
+==Distributed Social Network==
 
 ==Group: Three Way Handshake===
 Richard Gerdes
@@ -25,6 +25,7 @@ On launch of the client, the user will be asked for a username and password.
 User can enter commands detailed below to interact with the network.
 
 ==Commands===
+===Profile Attributes===
 set <private|public> <name>
 	- sets a particular attribute of the users profile identified by <name> to <public|private>
 add <name> <value>
@@ -36,12 +37,22 @@ update <name> <value>
 remove <name>
 	- clears attribute of users profile identified by <name>
 	- if <name> does not exist, nothing happens.
+request <identity> <name>
+	- requests from <identity> the profile attribute <name>
+	- if user is blocked by <identity>, no response is given
+	- if attribute does not exist in the profile of <identity>, no response is given
+	- if the attribute <name> is private on the profile of <identity>, and sender is not approved, no response is given
+	- otherwise, the user receives the given piece of information.
+	
+===Directory Access==
 directory <join|leave> <name>
 	- <joins|leaves> the directory located at the address <name>
 directory <list|unlist> <name>
 	- <lists|unlists> the attribute identified by <name> from all directories that the user has joined
 directory search <name> <criteria>
 	- makes a request to directory located at the address <name> for users meetings the criteria specified in the json strings <criteria>
+
+===Friendship and Access Control===
 friend <identity>
 	- send a friend request to <identity>
 approve <identity>
@@ -53,12 +64,8 @@ block <identity>
 	- block all requests from <identity>
 unblock <identity>
 	- remove block on requests from <identity>
-request <identity> <name>
-	- requests from <identity> the profile attribute <name>
-	- if user is blocked by <identity>, no response is given
-	- if attribute does not exist in the profile of <identity>, no response is given
-	- if the attribute <name> is private on the profile of <identity>, and sender is not approved, no response is given
-	- otherwise, the user receives the given piece of information.
+
+===Converse===
 message <identity> <value>
 	- send the message <value> to <identity>
 	- if <identity> has blocked the sender, message is not delivered
