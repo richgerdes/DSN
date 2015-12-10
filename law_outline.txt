@@ -1,0 +1,55 @@
+Sangini Shah, Rich Gerdes, Corey Wu
+
+directory = directory@something
+
+/*
+	message structure should be
+		{command: "name of function", <function params named according to comments below>...}
+*/
+
+ON ADOPTED
+	set {key: name, value: {visibility: public, val: nameOfPerson}} to personal data store
+	send name and information to directory
+	
+ON SENT(sender, receiver, message)
+	// set(visibility, key)
+	if( message.command === "set" ) 
+		check message.key != name
+			get thing = CS(message.key)
+			set thing.value.visibility = message.visibility
+		else
+			do nothing
+	
+	// add(key, value)
+	if( message.command === "add" ) 
+		set {key: message.key, value: {visibility: public, val: value}} // **NOTE: WILL ALWAYS BE ADDED AS PUBLIC
+	
+	//update(key, value)
+	if( message.command === "update" )
+		get this = CS(message.key)
+		if null
+			set {key: message.key, value: {visibility: public, val: value}} // **NOTE: WILL ALWAYS BE ADDED AS PUBLIC
+		else
+			this.value.val = value
+			set this 
+			
+	//remove(key)
+	if( message.command === "remove" )
+		unset message.key
+	
+	//directory(action, key)
+	if( message.command === "directory" && this.sender !== directory )
+		//action join/leave is ignored for now because we are only keeping one 
+		//	master directory
+		do forward
+	
+	//directorySearch(key, criteria)
+	if( message.command === "directorySearch" )
+		do forward
+	
+	//friend()
+	if( message.command === "friend" )
+		do forward
+		
+	//approve(
+	
