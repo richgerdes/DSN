@@ -72,7 +72,7 @@ public class Client {
 					
 					switch(cmd[0]){
 					case "set":
-						if(!(cmd[1].equals("private") || cmd[1].equals("public")){
+						if(!(cmd[1].equals("private") || cmd[1].equals("public"))){
 							System.out.println("Invalid visibility type: " + cmd[1]);
 							break;
 						}
