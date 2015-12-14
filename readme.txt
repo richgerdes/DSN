@@ -55,9 +55,14 @@ directory search <name> <criteria>
 ===Friendship and Access Control===
 friend <identity>
 	- send a friend request to <identity>
+	- add <identity> to a waiting list so no more messages can be sent to them until an accept or reject is received
 approve <identity>
 	- add <identity> to the list of users who can access private content
 	- effective accept of friend request
+	- forward approve message to <identity>
+reject <identity>
+	- reject <identity>'s friend request
+	- forward reject message to <identity>
 revoke <identity>
 	- remove <identity> from the list of users who can access private content
 block <identity>
