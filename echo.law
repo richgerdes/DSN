@@ -1,6 +1,6 @@
-law(trivial, language(javascript))
+law(echo, language(javascript))
 
-UPON("sent", function() {
+UPON("sent", function {
   DO("forward", {
     sender: "",
     receiver: this.sender,
@@ -9,7 +9,97 @@ UPON("sent", function() {
   return true;
 });
 
-UPON("arrived", function() {
+UPON("arrived", function {
+ 
+  /* reject all messages from a blocked user */
+  var status = CS(this.sender);
+  if (status !== undefined && status === "blocked"){
+	  return true;
+  }
+  
+  /* friend(identity) */
+  if(this.message.command === "friend"){
+  	DO("set", {
+		key: this.sender,
+		value: "pending"  	
+  	});
+  	DO("deliver", {
+  		message: {
+  			from: this.sender,
+  			message: "friend requested you!"
+  		}
+  	});
+  	return true;
+  }
+  
+  /* approve(identity) */
+  if(this.message.command === "approve"){
+  	DO("set", {
+		key: this.sender,
+		value: "friends"  	
+  	});
+  	DO("deliver", {
+  		message: {
+  			from: this.sender,
+  			message: "accepted your friend request! :D"
+  		}
+  	});
+  }
+  
+  /* reject(identity) */
+  if(this.message.command === "reject"){
+  	DO("unset", {
+		key: this.sender  	
+  	});
+  	DO("deliver", {
+  		message: {
+  			from: this.sender,
+  			message: "rejected your friend request. :("
+  		}
+  	});
+  }
+  
+  /* request(identity, key) */
+  if(this.message.command === "request"){
+  	var item = CS(message.key);
+  	var status = CS(sender);
+  	
+  	if(item === undefined){
+  		return true;
+  	}
+  	
+  	if((item.visibility === "private" && status === "friend") || item.visibility === "public" ){
+  		DO("forward", {
+  			sender: this.self,
+  			receiver: this.sender,
+  			message: item
+  			}
+  		});
+  	} 
+  	
+  	return true;
+  }
+  
+  /*directorySearch(criteria)*/
+  if(this.message.command === "directorySearch" && this.self === directory){
+  	
+  }	    
+
+  /*directory(action, key)*/
+  if(this.message.command === "directory" && this.self === directory){
+  	
+  }	
+  
+  /* message(identity, val) */
+  if(this.message.command === "message"){
+  	DO("deliver", { 
+  		message: { 
+  			from: this.sender, 
+  			message: this.message.val 
+  	});
+  	return true;
+  }
+  
   DO("deliver");
   return true;
 });
