@@ -21,7 +21,7 @@ public class Client implements Agent{
         
         String controller_name = args[0];
         String controller_port = args[1];
-        String law_path = "./echo.law.js";
+        String law_path = "./echo.law";
         String agent_name = "";
         String agent_secret = "";
         

@@ -48,8 +48,8 @@ UPON("sent", function() {var parts2 = this.message.split(" ", 2);
 	  break;
 	default:
 	  DO("forward", {
-        sender: "WGS_DSN",
-        receiver: this.sender,
+        sender:this.self,
+        receiver:this.self,
         message: "Invalid command!! Try again!"
       });
   }
