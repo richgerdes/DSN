@@ -4,10 +4,12 @@ law(echo, language(javascript))
 		key: peers, value: {}
 */
 
+var directory = "directory@172.31.130.199";
+
 UPON("adopted", function() { 
   
     DO("set", { 
-      key: name, 
+      key: "name", 
       value: {
          visibility: "public",
          val: "nameOfPerson"
@@ -15,7 +17,7 @@ UPON("adopted", function() {
     }); 
     
     DO("set", { 
-      key: peers, 
+      key: "peers", 
       value: {} 
     }); 
 
@@ -78,7 +80,7 @@ UPON("sent", function() {var parts2 = this.message.split(" ", 2);
 	  break;
 	default:
 	  DO("forward", {
-        sender:this.self,
+        sender:this.sender,
         receiver:this.self,
         message: "Invalid command!! Try again!"
       });
@@ -88,7 +90,7 @@ UPON("sent", function() {var parts2 = this.message.split(" ", 2);
   
   if (msg.command === "set") { 
       if(msg.key !== "name") {
-        obj thing = CS(msg.key);
+        var thing = CS(msg.key);
         thing.visibility = msg.visibility;
 	DO("set", { 
       	   key: msg.key, 
@@ -113,7 +115,7 @@ UPON("sent", function() {var parts2 = this.message.split(" ", 2);
   }
   
   if (msg.command === "update") { 
-      obj thing = CS(msg.key);
+      var thing = CS(msg.key);
       if (thing === null) {
 	 DO("set", { 
       	    key: msg.key, 
