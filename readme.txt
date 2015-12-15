@@ -45,11 +45,9 @@ request <identity> <name>
 	- otherwise, the user receives the given piece of information.
 	
 ===Directory Access==
-directory <join|leave> <name>
-	- <joins|leaves> the directory located at the address <name>
 directory <list|unlist> <name>
 	- <lists|unlists> the attribute identified by <name> from all directories that the user has joined
-directory search <name> <criteria>
+directory search <criteria>
 	- makes a request to directory located at the address <name> for users meetings the criteria specified in the json strings <criteria>
 
 ===Friendship and Access Control===
