@@ -11,7 +11,7 @@ UPON("adopted", function() {
       key: "name", 
       value: {
          visibility: "public",
-         val: "nameOfPerson"
+         val: this.self
       } 
     }); 
     
@@ -19,6 +19,11 @@ UPON("adopted", function() {
       key: "peers", 
       value: {} 
     }); 
+	
+	DO("set", {
+		key: "directory",
+		value: {}
+	});
 
     if (this.self !== directory) { 
       DO("forward", { 
@@ -34,7 +39,8 @@ UPON("adopted", function() {
     return true; 
 });
 
-UPON("sent", function() {var parts2 = this.message.split(" ", 2);
+UPON("sent", function() {
+  var parts2 = this.message.split(" ", 2);
   var parts3 = this.message.split(" ", 3);
   var parts4 = this.message.split(" ", 4);
   var msg = {command:parts2[0]};
