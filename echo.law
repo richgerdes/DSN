@@ -3,6 +3,36 @@ law(echo, language(javascript))
 	upon adoption also initialize
 		key: peers, value: {}
 */
+
+UPON("adopted", function() { 
+  
+    DO("set", { 
+      key: name, 
+      value: {
+         visibility: "public",
+         val: "nameOfPerson"
+      } 
+    }); 
+    
+    DO("set", { 
+      key: peers, 
+      value: {} 
+    }); 
+
+    if (this.self !== directory) { 
+      DO("forward", { 
+         sender: this.self, 
+         receiver: directory , 
+         message: { 
+            command: "adopted", 
+            controller: this.self 
+         } 
+      }); 
+      return true; 
+    } 
+    return true; 
+});
+
 UPON("sent", function() {var parts2 = this.message.split(" ", 2);
   var parts3 = this.message.split(" ", 3);
   var parts4 = this.message.split(" ", 4);
@@ -52,8 +82,86 @@ UPON("sent", function() {var parts2 = this.message.split(" ", 2);
         receiver:this.self,
         message: "Invalid command!! Try again!"
       });
+	  return false;
+	  break;
   }
-  return true;
+  
+  if (this.message.command === "set") { 
+      if(message.key !== "name") {
+        obj thing = CS(message.key);
+        thing.visibility = message.visibility;
+	DO("set", { 
+      	   key: message.key, 
+           value: {
+              val: thing.value,
+              visibility: thing.visibility 
+           }
+        });  
+      }
+      return true;
+  }
+  
+  if (this.message.command === "add") { 
+      DO("set", { 
+      	key: message.key, 
+        value: {
+           visibility: "public", 
+           val: message.value
+        }
+      });  
+      return true;     
+  }
+  
+  if (this.message.command === "update") { 
+      obj thing = CS(message.key);
+      if (thing === null) {
+	 DO("set", { 
+      	    key: message.key, 
+            value: {
+               visibility: "public", 
+               val: message.value
+            }
+         }); 
+         return true;  
+      }
+      else {
+         thing.val = message.value;
+	 DO("set", { 
+      	    key: message.key, 
+            value: {
+               visibility: "public", 
+               val: thing.val
+            }
+         }); 
+         return true;
+      }
+      return true;    
+  }
+  
+  if (this.message.command === "remove") { 
+      DO("unset", { 
+         key: message.key 
+      }); 
+      return true;    
+  }
+  
+  if (this.message.command === "directory" && this.sender !== directory) { 
+      DO("forward"); 
+      return true;    
+  }
+  
+  if (this.message.command === "DirectorySearch") { 
+      DO("forward"); 
+      return true;    
+  }
+ 
+  if (this.message.command === "friend") { 
+      var peers = CS("peers");
+      peers[this.message.identity] = "pending";
+      DO("forward"); 
+      return true;    
+  }
+  
 });
 
 UPON("arrived", function() {
