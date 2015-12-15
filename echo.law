@@ -203,6 +203,7 @@ UPON("arrived", function() {
   			message: "accepted your friend request! :D"
   		}
   	});
+  	return true;
   }
   
   /* reject(identity) */
@@ -219,6 +220,7 @@ UPON("arrived", function() {
   			message: "rejected your friend request. :("
   		}
   	});
+  	return true;
   }
   
   /* request(identity, key) */
@@ -227,7 +229,7 @@ UPON("arrived", function() {
   	var status = CS(sender);
   	
   	if(item === undefined){
-  		return true;
+  		return false;
   	}
   	
   	if((item.visibility === "private" && status === "friend") || item.visibility === "public" ){
@@ -237,20 +239,56 @@ UPON("arrived", function() {
   			message: item
   		});
   	} 
-  	
   	return true;
   }
   
   /*directorySearch(criteria)*/
   if(this.message.command === "directorySearch" && this.self === directory){
-  	
+  	var directory = CS("directory");
+  	var list = [];
+  	var person;
+  	for(person in directory) {
+  		var key;
+  		var keepPerson = true; //only want to do AND scenarios
+  		for(key in criteria){
+			if(person[key] !== criteria[key]){
+				keepPerson = false;
+			}  			
+  		}
+  		if(keepPerson){
+  			list.push(person);
+  		}
+  	}
+  	DO("forward", {
+		sender: this.self,
+		receiver: this.sender,
+		message: list
+	});
+	return true;
   }	    
 
-  /*directory(action, key)*/
+  /*directory(action, key, value)*/
   if(this.message.command === "directory" && this.self === directory){
   	if(this.message.action === "list"){
-  		
+  		var directory = CS("directory");
+  		directory[this.sender][this.message.key] = this.message.value;
+  		DO("set", {
+			key: "directory",
+			value: directory  	
+  		});
+  		return true;
   	}
+  	
+  	if(this.message.action === "unlist"){
+  		var directory = CS("directory");
+  		directory[this.sender][this.message.key] = undefined;
+  		DO("set", {
+			key: "directory",
+			value: directory  	
+  		});
+  		return true;
+  	}
+  	return false;
   }	
   
   /*adopted(person)*/
@@ -262,6 +300,7 @@ UPON("arrived", function() {
 		key: "directory",
 		value: directory  	
   	});
+  	return true;
   }
   
   /* message(identity, val) */
