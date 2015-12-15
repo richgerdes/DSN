@@ -21,7 +21,7 @@ public class Client implements Agent{
         
         String controller_name = args[0];
         String controller_port = args[1];
-        String law_path = "./echo.law";
+        String law_path = "./echo.law.js";
         String agent_name = "";
         String agent_secret = "";
         
@@ -97,7 +97,7 @@ public class Client implements Agent{
 
     public static void main (String[] args) throws Exception {
         Client agent = new Client();
-        String[] clientArgs = {"192.168.94.202","9000"};
+        String[] clientArgs = {"172.31.130.199","9000"};
         agent.run(clientArgs);
     }
 }
