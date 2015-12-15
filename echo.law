@@ -1,7 +1,6 @@
 law(echo, language(javascript))
 /*
-	upon adoption also initialize
-		key: peers, value: {}
+	upon adoption if directory also initialize
 */
 UPON("sent", function() {
   DO("forward", {
@@ -23,9 +22,11 @@ UPON("arrived", function() {
   
   /* friend(identity) */
   if(this.message.command === "friend"){
+  	var peers = CS("peers");
+  	peers[this.sender] = "requested";
   	DO("set", {
-		key: this.sender,
-		value: "pending"  	
+		key: "peers",
+		value: peers  	
   	});
   	DO("deliver", {
   		message: {
@@ -38,9 +39,11 @@ UPON("arrived", function() {
   
   /* approve(identity) */
   if(this.message.command === "approve"){
+  	var peers = CS("peers");
+  	peers[this.sender] = "friends";
   	DO("set", {
-		key: this.sender,
-		value: "friends"  	
+		key: "peers",
+		value: peers  	
   	});
   	DO("deliver", {
   		message: {
@@ -52,8 +55,11 @@ UPON("arrived", function() {
   
   /* reject(identity) */
   if(this.message.command === "reject"){
-  	DO("unset", {
-		key: this.sender  	
+  	var peers = CS("peers");
+  	peers[this.sender] = "public";
+  	DO("set", {
+		key: "peers",
+		value: peers  	
   	});
   	DO("deliver", {
   		message: {
@@ -64,7 +70,6 @@ UPON("arrived", function() {
   }
   
   /* request(identity, key) */
-  /*changed event to command*/
   if(this.message.command === "request"){
   	var item = CS(message.key);
   	var status = CS(sender);
@@ -91,8 +96,21 @@ UPON("arrived", function() {
 
   /*directory(action, key)*/
   if(this.message.command === "directory" && this.self === directory){
-  	
+  	if(this.message.action === "list"){
+  		
+  	}
   }	
+  
+  /*adopted(person)*/
+  if(this.message.command === "adopted" && this.self === directory){
+  	var directory = CS("directory");
+  	directory[this.sender] = { name: this.sender };
+  	/*directory[this.sender][<name>] = stuff;*/
+  	DO("set", {
+		key: "directory",
+		value: directory  	
+  	});
+  }
   
   /* message(identity, val) */
   if(this.message.command === "message"){
