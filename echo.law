@@ -2,8 +2,7 @@ law(echo, language(javascript))
 /*
 	upon adoption if directory also initialize
 */
-
-var directory = "directory@172.31.130.199";
+directory_host = "directory@172.31.130.199";
 
 UPON("adopted", function() { 
   
@@ -25,10 +24,10 @@ UPON("adopted", function() {
 		value: {}
 	});
 
-    if (this.self !== directory) { 
+    if (this.self !== directory_host) { 
       DO("forward", { 
          sender: this.self, 
-         receiver: directory , 
+         receiver: directory_host , 
          message: { 
             command: "adopted", 
             controller: this.self 
@@ -40,6 +39,7 @@ UPON("adopted", function() {
 });
 
 UPON("sent", function() {
+	
   var parts2 = this.message.split(" ", 2);
   var parts3 = this.message.split(" ", 3);
   var parts4 = this.message.split(" ", 4);
@@ -66,9 +66,10 @@ UPON("sent", function() {
 	  if(parts3[1] == "list" || parts3[1] == "unlist"){
 	    msg.action = parts3[1];
         msg.key = parts3[3];
+		msg.value = CS(msg.key);
 	  }else if(parts3[1] == "search"){
 		msg.action = parts3[1];
-		msg.criteria = parts3[2];
+		msg.criteria = eval("(function(){return " + parts3[2] + ";})()");
 	  }
 	  break;
 	case "friend":
@@ -81,10 +82,10 @@ UPON("sent", function() {
 	  break;
 	case "message":
 	  msg.identity = parts3[1];
-	  msg.identity = parts3[2];
+	  msg.val = parts3[2];
 	  break;
 	default:
-	  DO("forward", {
+	  DO("deliver", {
         sender:this.sender,
         receiver:this.self,
         message: "Invalid command!! Try again!"
@@ -152,27 +153,37 @@ UPON("sent", function() {
       return true;    
   }
   
-  if (msg.command === "directory" && this.sender !== directory) { 
-      DO("forward"); 
-      return true;    
-  }
-  
-  if (msg.command === "DirectorySearch") { 
-      DO("forward"); 
+  if (msg.command === "directory" && this.self !== directory_host) { 
+      DO("forward", {
+        sender:this.self,
+        receiver:directory_host,
+        message: msg
+      });
       return true;    
   }
  
   if (msg.command === "friend") { 
       var peers = CS("peers");
       peers[this.msg.identity] = "pending";
-      DO("forward"); 
+      DO("forward",{
+        sender:this.self,
+        receiver:msg.identity,
+        message: msg
+      }); 
       return true;    
   }
+  
+  DO("deliver", {
+	sender:this.sender,
+	receiver:this.self,
+	message: "Invalid command!! No Action Taken."
+  });
+  return false;
   
 });
 
 UPON("arrived", function() {
- 
+	
   /* reject all messages from a blocked user */
   var peers = CS("peers");
   var status = peers[this.sender];
@@ -233,7 +244,7 @@ UPON("arrived", function() {
   
   /* request(identity, key) */
   if(this.message.command === "request"){
-  	var item = CS(message.key);
+  	var item = CS(this.message.key);
   	var status = CS(sender);
   	
   	if(item === undefined){
@@ -249,34 +260,10 @@ UPON("arrived", function() {
   	} 
   	return true;
   }
-  
-  /*directorySearch(criteria)*/
-  if(this.message.command === "directorySearch" && this.self === directory){
-  	var directory = CS("directory");
-  	var list = [];
-  	var person;
-  	for(person in directory) {
-  		var key;
-  		var keepPerson = true; //only want to do AND scenarios
-  		for(key in criteria){
-			if(person[key] !== criteria[key]){
-				keepPerson = false;
-			}  			
-  		}
-  		if(keepPerson){
-  			list.push(person);
-  		}
-  	}
-  	DO("forward", {
-		sender: this.self,
-		receiver: this.sender,
-		message: list
-	});
-	return true;
-  }	    
-
+		
   /*directory(action, key, value)*/
-  if(this.message.command === "directory" && this.self === directory){
+  if(this.message.command === "directory" && this.self === directory_host){
+		
   	if(this.message.action === "list"){
   		var directory = CS("directory");
   		directory[this.sender][this.message.key] = this.message.value;
@@ -284,7 +271,7 @@ UPON("arrived", function() {
 			key: "directory",
 			value: directory  	
   		});
-  		return true;
+  		return true; 
   	}
   	
   	if(this.message.action === "unlist"){
@@ -296,13 +283,49 @@ UPON("arrived", function() {
   		});
   		return true;
   	}
+	
+	if(this.message.action === "search"){
+  		var directory = CS("directory");
+		var list = [];
+		for(person in directory) {
+			var keepPerson = true; //only want to do AND scenarios
+			DO("deliver",{
+				message: "test " + person + " " + this.message.criteria
+			});
+			for(key in this.message.criteria){
+				DO("deliver",{
+					message: directory[person] + " " + directory[person][key] + " " + this.message.criteria[key]
+				});
+				if(directory[person][key] !== this.message.criteria[key]){
+					keepPerson = false;
+				}  			
+			}
+			if(keepPerson){
+				list.push(person);
+			}
+		}
+		DO("forward", {
+			sender: this.self,
+			receiver: this.sender,
+			message: list
+		});
+		return true;
+	}
+	
+	DO("forward", {
+		sender: this.self,
+		receiver: this.sender,
+		message: "Invalid message"
+	});
+	
   	return false;
   }	
   
+  
   /*adopted(person)*/
-  if(this.message.command === "adopted" && this.self === directory){
+  if(this.message.command === "adopted" && this.self === directory_host){
   	var directory = CS("directory");
-  	directory[this.sender] = { name: this.sender };
+  	directory[this.message.controller] = { name: this.message.controller };
   	/*directory[this.sender][<name>] = stuff;*/
   	DO("set", {
 		key: "directory",
@@ -322,7 +345,11 @@ UPON("arrived", function() {
   	return true;
   }
   
-  DO("deliver");
+  DO("deliver",{
+	sender: this.self,
+	receiver: this.self,
+	message: this.message
+  });
   return true;
 });
 
