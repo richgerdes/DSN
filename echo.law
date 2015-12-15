@@ -2,13 +2,165 @@ law(echo, language(javascript))
 /*
 	upon adoption if directory also initialize
 */
-UPON("sent", function() {
-  DO("forward", {
-    sender: "",
-    receiver: this.sender,
-    message: this.message
-  });
-  return true;
+
+UPON("adopted", function() { 
+  
+    DO("set", { 
+      key: name, 
+      value: {
+         visibility: "public",
+         val: "nameOfPerson"
+      } 
+    }); 
+    
+    DO("set", { 
+      key: peers, 
+      value: {} 
+    }); 
+
+    if (this.self !== directory) { 
+      DO("forward", { 
+         sender: this.self, 
+         receiver: directory , 
+         message: { 
+            command: "adopted", 
+            controller: this.self 
+         } 
+      }); 
+      return true; 
+    } 
+    return true; 
+});
+
+UPON("sent", function() {var parts2 = this.message.split(" ", 2);
+  var parts3 = this.message.split(" ", 3);
+  var parts4 = this.message.split(" ", 4);
+  var msg = {command:parts2[0]};
+  
+  switch(msg.command){
+	case "set":
+	  msg.visibility = parts3[1];
+	  msg.key = parts3[2];
+	  break;
+	case "add":
+	case "update":
+	  msg.key = parts3[1];
+	  msg.value = parts3[2];
+	  break;
+	case "remove":
+	  msg.key = parts2[1];
+	  break;
+	case "request":
+	  msg.key = parts3[2];
+	  msg.identity = parts3[1];
+	  break;
+	case "directory":
+	  if(parts3[1] == "list" || parts3[1] == "unlist"){
+	    msg.action = parts3[1];
+        msg.key = parts3[3];
+	  }else if(parts3[1] == "search"){
+		msg.action = parts3[1];
+		msg.criteria = parts3[2];
+	  }
+	  break;
+	case "friend":
+	case "approve":
+	case "reject":
+	case "revoke":
+	case "block":
+	case "unblock":
+	  msg.identity = parts2[1];
+	  break;
+	case "message":
+	  msg.identity = parts3[1];
+	  msg.identity = parts3[2];
+	  break;
+	default:
+	  DO("forward", {
+        sender:this.self,
+        receiver:this.self,
+        message: "Invalid command!! Try again!"
+      });
+	  return false;
+	  break;
+  }
+  
+  if (msg.command === "set") { 
+      if(msg.key !== "name") {
+        obj thing = CS(msg.key);
+        thing.visibility = msg.visibility;
+	DO("set", { 
+      	   key: msg.key, 
+           value: {
+              val: thing.value,
+              visibility: thing.visibility 
+           }
+        });  
+      }
+      return true;
+  }
+  
+  if (msg.command === "add") { 
+      DO("set", { 
+      	key: msg.key, 
+        value: {
+           visibility: "public", 
+           val: msg.value
+        }
+      });  
+      return true;     
+  }
+  
+  if (msg.command === "update") { 
+      obj thing = CS(msg.key);
+      if (thing === null) {
+	 DO("set", { 
+      	    key: msg.key, 
+            value: {
+               visibility: "public", 
+               val: msg.value
+            }
+         }); 
+         return true;  
+      }
+      else {
+         thing.val = msg.value;
+	 DO("set", { 
+      	    key: msg.key, 
+            value: {
+               visibility: "public", 
+               val: thing.val
+            }
+         }); 
+         return true;
+      }
+      return true;    
+  }
+  
+  if (msg.command === "remove") { 
+      DO("unset", { 
+         key: msg.key 
+      }); 
+      return true;    
+  }
+  
+  if (msg.command === "directory" && this.sender !== directory) { 
+      DO("forward"); 
+      return true;    
+  }
+  
+  if (msg.command === "DirectorySearch") { 
+      DO("forward"); 
+      return true;    
+  }
+ 
+  if (msg.command === "friend") { 
+      var peers = CS("peers");
+      peers[this.msg.identity] = "pending";
+      DO("forward"); 
+      return true;    
+  }
+  
 });
 
 UPON("arrived", function() {
