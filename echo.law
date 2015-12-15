@@ -1,6 +1,9 @@
 law(echo, language(javascript))
-
-UPON("sent", function {
+/*
+	upon adoption also initialize
+		key: peers, value: {}
+*/
+UPON("sent", function() {
   DO("forward", {
     sender: "",
     receiver: this.sender,
@@ -9,13 +12,14 @@ UPON("sent", function {
   return true;
 });
 
-UPON("arrived", function {
+UPON("arrived", function() {
  
   /* reject all messages from a blocked user */
-  var status = CS(this.sender);
-  if (status !== undefined && status === "blocked"){
-	  return true;
-  }
+  var peers = CS("peers");
+  var status = peers[this.sender];
+  if(status !== undefined && status === "blocked"){
+  	return false;
+  } 
   
   /* friend(identity) */
   if(this.message.command === "friend"){
@@ -60,6 +64,7 @@ UPON("arrived", function {
   }
   
   /* request(identity, key) */
+  /*changed event to command*/
   if(this.message.command === "request"){
   	var item = CS(message.key);
   	var status = CS(sender);
@@ -73,7 +78,6 @@ UPON("arrived", function {
   			sender: this.self,
   			receiver: this.sender,
   			message: item
-  			}
   		});
   	} 
   	
@@ -96,6 +100,7 @@ UPON("arrived", function {
   		message: { 
   			from: this.sender, 
   			message: this.message.val 
+  		}
   	});
   	return true;
   }
