@@ -86,12 +86,12 @@ UPON("sent", function() {var parts2 = this.message.split(" ", 2);
 	  break;
   }
   
-  if (this.message.command === "set") { 
-      if(message.key !== "name") {
-        obj thing = CS(message.key);
-        thing.visibility = message.visibility;
+  if (msg.command === "set") { 
+      if(msg.key !== "name") {
+        obj thing = CS(msg.key);
+        thing.visibility = msg.visibility;
 	DO("set", { 
-      	   key: message.key, 
+      	   key: msg.key, 
            value: {
               val: thing.value,
               visibility: thing.visibility 
@@ -101,33 +101,33 @@ UPON("sent", function() {var parts2 = this.message.split(" ", 2);
       return true;
   }
   
-  if (this.message.command === "add") { 
+  if (msg.command === "add") { 
       DO("set", { 
-      	key: message.key, 
+      	key: msg.key, 
         value: {
            visibility: "public", 
-           val: message.value
+           val: msg.value
         }
       });  
       return true;     
   }
   
-  if (this.message.command === "update") { 
-      obj thing = CS(message.key);
+  if (msg.command === "update") { 
+      obj thing = CS(msg.key);
       if (thing === null) {
 	 DO("set", { 
-      	    key: message.key, 
+      	    key: msg.key, 
             value: {
                visibility: "public", 
-               val: message.value
+               val: msg.value
             }
          }); 
          return true;  
       }
       else {
-         thing.val = message.value;
+         thing.val = msg.value;
 	 DO("set", { 
-      	    key: message.key, 
+      	    key: msg.key, 
             value: {
                visibility: "public", 
                val: thing.val
@@ -138,26 +138,26 @@ UPON("sent", function() {var parts2 = this.message.split(" ", 2);
       return true;    
   }
   
-  if (this.message.command === "remove") { 
+  if (msg.command === "remove") { 
       DO("unset", { 
-         key: message.key 
+         key: msg.key 
       }); 
       return true;    
   }
   
-  if (this.message.command === "directory" && this.sender !== directory) { 
+  if (msg.command === "directory" && this.sender !== directory) { 
       DO("forward"); 
       return true;    
   }
   
-  if (this.message.command === "DirectorySearch") { 
+  if (msg.command === "DirectorySearch") { 
       DO("forward"); 
       return true;    
   }
  
-  if (this.message.command === "friend") { 
+  if (msg.command === "friend") { 
       var peers = CS("peers");
-      peers[this.message.identity] = "pending";
+      peers[this.msg.identity] = "pending";
       DO("forward"); 
       return true;    
   }
