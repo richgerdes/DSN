@@ -93,10 +93,6 @@ UPON("sent", function() {
 	  return false;
 	  break;
   }
- 
-	DO("deliver",{
-		message: msg.command
-	});
   
   if (msg.command === "set") { 
       if(msg.key !== "name") {
@@ -106,9 +102,6 @@ UPON("sent", function() {
       	   key: msg.key, 
            value: thing
         });
-		DO("deliver",{
-			message: CS(msg.key)
-		});
       }
       return true;
   }
@@ -120,10 +113,7 @@ UPON("sent", function() {
            visibility: "public", 
            val: msg.value
         }
-      }); 
-	DO("deliver",{
-		message: CS(msg.key)
-	});
+      });
       return true;     
   }
   
@@ -145,19 +135,13 @@ UPON("sent", function() {
             value: thing
          }); 
       }
-		DO("deliver",{
-			message: CS(msg.key)
-		});
       return true;    
   }
   
   if (msg.command === "remove") { 
       DO("unset", { 
          key: msg.key 
-      }); 
-		DO("deliver",{
-			message: CS(msg.key)
-		});
+      });
       return true;    
   }
   
@@ -346,10 +330,7 @@ UPON("arrived", function() {
 		
   /*directory(action, key, value)*/
   if(this.message.command === "directory" && this.self === directory_host){
-		
-		DO("deliver",{
-			message: "msg"
-		});
+	
   	if(this.message.action === "list"){
   		var directory = CS("directory");
   		directory[this.sender][this.message.key] = this.message.value;
@@ -357,9 +338,6 @@ UPON("arrived", function() {
 			key: "directory",
 			value: directory  	
   		});
-		DO("deliver",{
-			message: JSON.stringify(directory[this.sender])
-		});
   		return true; 
   	}
   	
@@ -370,9 +348,6 @@ UPON("arrived", function() {
 			key: "directory",
 			value: directory  	
   		});
-		DO("deliver",{
-			message: JSON.stringify(directory[this.sender])
-		});
   		return true;
   	}
 	
@@ -382,9 +357,6 @@ UPON("arrived", function() {
 		for(person in directory) {
 			var keepPerson = true; //only want to do AND scenarios
 			for(key in this.message.criteria){
-				DO("deliver",{
-					message: JSON.stringify(directory[person]) + " " + JSON.stringify(directory[person][key]) + " " + this.message.criteria[key]
-				});
 				if(directory[person][key] !== this.message.criteria[key]){
 					keepPerson = false;
 				}  			
