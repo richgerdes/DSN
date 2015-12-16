@@ -154,6 +154,15 @@ UPON("sent", function() {
       return true;    
   }
 		
+  if (msg.command === "request") { 
+      DO("forward",{
+        sender:this.self,
+        receiver:msg.identity,
+        message: msg
+      });
+      return true;    
+  }
+		
   if (msg.command === "friend") { 
       var peers = CS("peers");
       peers[msg.identity] = "pending";
