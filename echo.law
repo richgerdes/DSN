@@ -2,7 +2,7 @@ law(echo, language(javascript))
 /*
 	upon adoption if directory also initialize
 */
-directory_host = "directory@192.168.1.115";
+directory_host = "directory@172.31.150.117";
 
 UPON("adopted", function() { 
   
@@ -287,7 +287,7 @@ UPON("arrived", function() {
   /* approve(identity) */
   if(this.message.command === "approve"){
   	var peers = CS("peers");
-  	peers[this.sender] = "friends";
+  	peers[this.sender] = "friend";
   	DO("set", {
 		key: "peers",
 		value: peers  	
@@ -321,7 +321,8 @@ UPON("arrived", function() {
   /* request(identity, key) */
   if(this.message.command === "request"){
   	var item = CS(this.message.key);
-  	var status = CS(sender);
+  	var peers = CS("peers");
+  	var status = peers[this.sender];
   	
   	if(item === undefined){
   		return false;
@@ -331,7 +332,7 @@ UPON("arrived", function() {
   		DO("forward", {
   			sender: this.self,
   			receiver: this.sender,
-  			message: item
+  			message: { key: this.message.key, value: item.val } 
   		});
   	} 
   	return true;
