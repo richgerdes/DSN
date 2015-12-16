@@ -2,7 +2,7 @@ law(echo, language(javascript))
 /*
 	upon adoption if directory also initialize
 */
-directory_host = "directory@172.31.130.199";
+directory_host = "directory@192.168.1.115";
 
 UPON("adopted", function() { 
   
@@ -12,12 +12,12 @@ UPON("adopted", function() {
          visibility: "public",
          val: this.self
       } 
-    }); 
-    
+    });
+	
     DO("set", { 
       key: "peers", 
       value: {} 
-    }); 
+    });
 	
 	DO("set", {
 		key: "directory",
@@ -58,19 +58,19 @@ UPON("sent", function() {
 	case "remove":
 	  msg.key = parts2[1];
 	  break;
-	case "request":
-	  msg.key = parts3[2];
-	  msg.identity = parts3[1];
-	  break;
 	case "directory":
 	  if(parts3[1] == "list" || parts3[1] == "unlist"){
 	    msg.action = parts3[1];
-        msg.key = parts3[3];
-		msg.value = CS(msg.key);
+        msg.key = parts3[2];
+		msg.value = (CS(msg.key) !== undefined)?CS(msg.key).val:"";
 	  }else if(parts3[1] == "search"){
 		msg.action = parts3[1];
 		msg.criteria = eval("(function(){return " + parts3[2] + ";})()");
 	  }
+	  break;
+	case "request":
+	  msg.identity = parts3[1];
+	  msg.key = parts3[2];
 	  break;
 	case "friend":
 	case "approve":
@@ -93,18 +93,22 @@ UPON("sent", function() {
 	  return false;
 	  break;
   }
+ 
+	DO("deliver",{
+		message: msg.command
+	});
   
   if (msg.command === "set") { 
       if(msg.key !== "name") {
         var thing = CS(msg.key);
         thing.visibility = msg.visibility;
-	DO("set", { 
+		DO("set", { 
       	   key: msg.key, 
-           value: {
-              val: thing.value,
-              visibility: thing.visibility 
-           }
-        });  
+           value: thing
+        });
+		DO("deliver",{
+			message: CS(msg.key)
+		});
       }
       return true;
   }
@@ -116,33 +120,34 @@ UPON("sent", function() {
            visibility: "public", 
            val: msg.value
         }
-      });  
+      }); 
+	DO("deliver",{
+		message: CS(msg.key)
+	});
       return true;     
   }
   
   if (msg.command === "update") { 
       var thing = CS(msg.key);
-      if (thing === null) {
+      if (thing === undefined) {
 	 DO("set", { 
       	    key: msg.key, 
             value: {
                visibility: "public", 
                val: msg.value
             }
-         }); 
-         return true;  
+         });
       }
       else {
          thing.val = msg.value;
-	 DO("set", { 
+		DO("set", { 
       	    key: msg.key, 
-            value: {
-               visibility: "public", 
-               val: thing.val
-            }
+            value: thing
          }); 
-         return true;
       }
+		DO("deliver",{
+			message: CS(msg.key)
+		});
       return true;    
   }
   
@@ -150,6 +155,9 @@ UPON("sent", function() {
       DO("unset", { 
          key: msg.key 
       }); 
+		DO("deliver",{
+			message: CS(msg.key)
+		});
       return true;    
   }
   
@@ -161,16 +169,91 @@ UPON("sent", function() {
       });
       return true;    
   }
- 
+		
   if (msg.command === "friend") { 
       var peers = CS("peers");
-      peers[this.msg.identity] = "pending";
+      peers[msg.identity] = "pending";
       DO("forward",{
         sender:this.self,
         receiver:msg.identity,
         message: msg
       }); 
+	  DO("set",{
+		key: "peers", 
+		value: peers
+	  });
       return true;    
+  }
+  
+  if (msg.command === "approve") { 
+      var peers = CS("peers");
+	  if(peers[msg.identity] === "requested"){
+		  DO("forward",{
+			sender:this.self,
+			receiver:msg.identity,
+			message: msg
+		  });
+	  }
+      peers[msg.identity] = "friend";
+	  DO("set",{
+		key: "peers", 
+		value: peers
+	  });
+      return true;    
+  }
+ 
+  if (msg.command === "reject") { 
+      var peers = CS("peers");
+      peers[msg.identity] = "public";
+      DO("forward",{
+        sender:this.self,
+        receiver:msg.identity,
+        message: msg
+      });
+	  DO("set",{
+		key: "peers", 
+		value: peers
+	  });
+      return true;    
+  }
+ 
+  if (msg.command === "revoke") { 
+      var peers = CS("peers");
+      peers[msg.identity] = "public";
+	  DO("set",{
+		key: "peers", 
+		value: peers
+	  });
+      return true;    
+  }
+ 
+  if (msg.command === "block") { 
+      var peers = CS("peers");
+      peers[msg.identity] = "blocked";
+	  DO("set",{
+		key: "peers", 
+		value: peers
+	  });
+      return true;    
+  }
+ 
+  if (msg.command === "unblock") { 
+      var peers = CS("peers");
+      peers[msg.identity] = "public";
+	  DO("set",{
+		key: "peers", 
+		value: peers
+	  });
+      return true;    
+  }
+ 
+  if (msg.command === "message") { 
+      DO("forward",{
+        sender:this.self,
+        receiver:msg.identity,
+        message: msg
+      });
+      return true; 
   }
   
   DO("deliver", {
@@ -264,6 +347,9 @@ UPON("arrived", function() {
   /*directory(action, key, value)*/
   if(this.message.command === "directory" && this.self === directory_host){
 		
+		DO("deliver",{
+			message: "msg"
+		});
   	if(this.message.action === "list"){
   		var directory = CS("directory");
   		directory[this.sender][this.message.key] = this.message.value;
@@ -271,6 +357,9 @@ UPON("arrived", function() {
 			key: "directory",
 			value: directory  	
   		});
+		DO("deliver",{
+			message: JSON.stringify(directory[this.sender])
+		});
   		return true; 
   	}
   	
@@ -281,6 +370,9 @@ UPON("arrived", function() {
 			key: "directory",
 			value: directory  	
   		});
+		DO("deliver",{
+			message: JSON.stringify(directory[this.sender])
+		});
   		return true;
   	}
 	
@@ -289,12 +381,9 @@ UPON("arrived", function() {
 		var list = [];
 		for(person in directory) {
 			var keepPerson = true; //only want to do AND scenarios
-			DO("deliver",{
-				message: "test " + person + " " + this.message.criteria
-			});
 			for(key in this.message.criteria){
 				DO("deliver",{
-					message: directory[person] + " " + directory[person][key] + " " + this.message.criteria[key]
+					message: JSON.stringify(directory[person]) + " " + JSON.stringify(directory[person][key]) + " " + this.message.criteria[key]
 				});
 				if(directory[person][key] !== this.message.criteria[key]){
 					keepPerson = false;
