@@ -40,9 +40,21 @@ UPON("adopted", function() {
 
 UPON("sent", function() {
 	
-  var parts2 = this.message.split(" ", 2);
-  var parts3 = this.message.split(" ", 3);
-  var parts4 = this.message.split(" ", 4);
+  
+  var parts = this.message.split(" ");
+  
+  var part1 = parts.shift();
+  var part2 = parts.shift();
+  var part3 = parts.shift();
+  var part4 = parts.join(' ');
+  
+  var part3a = part3 + ((part4 != undefined)?" " + part4:"");
+  var part2a = part2 + ((part3 != undefined)?" " + part3:"") + ((part4 != undefined)?" " + part4:"");
+  
+  var parts2 = [part1, part2a];
+  var parts3 = [part1, part2, part3a];
+  var parts4 = [part1, part2, part3, part4];
+  
   var msg = {command:parts2[0]};
   
   switch(msg.command){

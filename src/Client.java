@@ -97,7 +97,7 @@ public class Client implements Agent{
 
     public static void main (String[] args) throws Exception {
         Client agent = new Client();
-        String[] clientArgs = {"192.168.1.115","9000"};
+        String[] clientArgs = {"192.168.1.129","9000"};
         agent.run(clientArgs);
     }
 }
